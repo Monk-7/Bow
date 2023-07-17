@@ -1,9 +1,10 @@
 import React, { useState,useRef } from "react";
-
+import axios from 'axios';
 interface Box {
   id: number;
   position: { x: number; y: number };
   size: { width: number; height: number };
+  rotate : boolean;
 }
 
 const BoxContainer: React.FC = () => {
@@ -16,6 +17,27 @@ const BoxContainer: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(500);
   const [containerHeight, setContainerHeight] = useState(500);
+
+  const sendForm = async () =>{
+    const form = boxes.map((box) => ({
+      ...box,
+      position: {
+        ...(box.rotate
+          ? { x: (box.position.x + (box.size.height / 2)), y: (box.position.x + (box.size.width / 2)) }
+          : { x: (box.position.x + (box.size.width / 2)), y: (box.position.x + (box.size.height / 2)) }
+        ),
+      }
+    }));
+    console.log(form.map((box) => box.position))
+
+    axios.get('http://192.168.1.60:8080')
+    .then((response) => {
+      console.log(response.data);
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+  }
 
   const handleMouseDown = (
     event: React.MouseEvent<HTMLDivElement>,
@@ -65,14 +87,27 @@ const BoxContainer: React.FC = () => {
     setBoxes(updatedBoxes);
   };
 
-  const handleAddBox = () => {
+  const handleAddBox = (rotate:boolean) => {
     const newBoxId = boxes.length + 1;
-    const newBox: Box = {
-      id: newBoxId,
-      position: { x: 0, y: 0 },
-      size: { width: boxeWidth, height: boxeHeight }
-    };
-    setBoxes([...boxes, newBox]);
+    if (rotate)
+    {
+      const newBox: Box = {
+        id: newBoxId,
+        position: { x: 0, y: 0 },
+        size: { width: boxeWidth, height: boxeHeight },
+        rotate : true
+      };
+      setBoxes([...boxes, newBox]);
+    }
+    else {
+      const newBox: Box = {
+        id: newBoxId,
+        position: { x: 0, y: 0 },
+        size: { width: boxeHeight, height: boxeWidth },
+        rotate : false
+      };
+      setBoxes([...boxes, newBox]);
+    }
   };
 
   const handleDeleteSelectedBox = () => {
@@ -100,9 +135,10 @@ const BoxContainer: React.FC = () => {
     const updatedBoxes = boxes.map((box) => ({
       ...box,
       size: {
-        ...box.size,
-        ["width"]: newSizeWidth,
-        ["height"]: newSizeHeight,
+        ...(box.rotate
+          ? { width: newSizeHeight, height: newSizeWidth }
+          : { width: newSizeWidth, height: newSizeHeight }
+        ),
       }
     }));
     setBoxes(updatedBoxes);
@@ -146,8 +182,10 @@ const BoxContainer: React.FC = () => {
           </div>
         ))}
       </div>
-      <button onClick={handleAddBox}>Add Box</button>
+      <button onClick={() => {handleAddBox(false)}}>Add Box</button>
+      <button onClick={() => {handleAddBox(true)}}>Add Box Rotate</button>
       <button onClick={handleDeleteSelectedBox}>Delete SelectedBox</button> 
+      <button onClick={sendForm}>Console</button> 
         <form onSubmit={(event) => {handleGlobalSizeChange(event);}}>
             <label htmlFor={`global_width`}>Width:</label>
             <input
