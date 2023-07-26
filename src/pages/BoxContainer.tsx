@@ -30,13 +30,26 @@ const BoxContainer: React.FC = () => {
     }));
     console.log(form.map((box) => box.position))
 
-    axios.get('http://192.168.1.60:8080')
-    .then((response) => {
+    const data = JSON.stringify({
+      id : 6,
+      name: 'User',
+    });
+
+    // axios.post('https://localhost:7233/user', data)
+    // .then(response => {
+    //   console.log('Response:', response.data);
+    // })
+    // .catch(error => {
+    //   console.error('Error:', error);
+    // })
+    const url = "https://localhost:7066/user"
+    axios.get(url)
+    .then(response => {
       console.log(response.data);
     })
-    .catch((error) => {
+    .catch(error => {
       console.error(error);
-    });
+    })
   }
 
   const handleMouseDown = (
