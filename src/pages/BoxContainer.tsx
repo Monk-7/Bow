@@ -3,7 +3,7 @@ import axios from 'axios';
 interface Box {
   id: number;
   position: { x: number; y: number };
-  size: { width: number; height: number };
+  size: { width: number; height: number, z: number};
   rotate : boolean;
 }
 
@@ -14,7 +14,7 @@ const BoxContainer: React.FC = () => {
   const [selectedBoxId, setSelectedBoxId] = useState<number | null>(null);
   const [boxeWidth, setBoxeWidth] = useState(50);
   const [boxeHeight, setBoxeHeight] = useState(50);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [boxeZ, setBoxeZ] = useState(0);
   const [containerWidth, setContainerWidth] = useState(500);
   const [containerHeight, setContainerHeight] = useState(500);
 
@@ -28,28 +28,35 @@ const BoxContainer: React.FC = () => {
         ),
       }
     }));
-    console.log(form.map((box) => box.position))
-
-    const data = JSON.stringify({
-      id : 6,
-      name: 'User',
+    // console.log(form)
+    // console.log(form.map((box) => box.position))
+    // console.log(form.map((box) => box.rotate))
+    // console.log(form.length)
+    
+    
+    const user = JSON.stringify({
+      
+      position : form.map((box) => box.position),
+      rotate : form.map((box) => box.rotate),
+      size : form.map((box) => box.size),
+      index : form.length
     });
 
-    // axios.post('https://localhost:7233/user', data)
-    // .then(response => {
-    //   console.log('Response:', response.data);
-    // })
-    // .catch(error => {
-    //   console.error('Error:', error);
-    // })
-    const url = "https://localhost:7066/user"
-    axios.get(url)
-    .then(response => {
-      console.log(response.data);
+    console.log(user)
+
+    const url = 'https://localhost:7163/User';
+    
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+
+    axios.post(url, user, { headers })
+    .then((response) => {
+      console.log('Response:', response.data);
     })
-    .catch(error => {
-      console.error(error);
-    })
+    .catch((error) => {
+      console.error('Error:', error);
+    });
   }
 
   const handleMouseDown = (
@@ -107,7 +114,7 @@ const BoxContainer: React.FC = () => {
       const newBox: Box = {
         id: newBoxId,
         position: { x: 0, y: 0 },
-        size: { width: boxeWidth, height: boxeHeight },
+        size: { width: boxeHeight, height: boxeWidth, z: boxeZ },
         rotate : true
       };
       setBoxes([...boxes, newBox]);
@@ -116,7 +123,7 @@ const BoxContainer: React.FC = () => {
       const newBox: Box = {
         id: newBoxId,
         position: { x: 0, y: 0 },
-        size: { width: boxeHeight, height: boxeWidth },
+        size: { width: boxeWidth, height: boxeHeight, z: boxeZ },
         rotate : false
       };
       setBoxes([...boxes, newBox]);
@@ -136,12 +143,15 @@ const BoxContainer: React.FC = () => {
     const target = event.target as typeof event.target & {
         global_width : {value: string};
         global_height: {value: string};
+        global_z : {value: string};
     };
     const newSizeWidth = parseInt(target.global_width.value);
     const newSizeHeight = parseInt(target.global_height.value);
+    const newSizeZ = parseInt(target.global_z.value);
     if (isNaN(newSizeWidth) || isNaN(newSizeHeight)) return;
     setBoxeWidth(newSizeWidth);
     setBoxeHeight(newSizeHeight);
+    setBoxeZ(newSizeZ);
     console.log(boxeWidth);
     console.log(boxeHeight);
 
@@ -149,8 +159,8 @@ const BoxContainer: React.FC = () => {
       ...box,
       size: {
         ...(box.rotate
-          ? { width: newSizeHeight, height: newSizeWidth }
-          : { width: newSizeWidth, height: newSizeHeight }
+          ? { width: newSizeHeight, height: newSizeWidth, z: newSizeZ }
+          : { width: newSizeWidth, height: newSizeHeight, z: newSizeZ }
         ),
       }
     }));
@@ -200,15 +210,21 @@ const BoxContainer: React.FC = () => {
       <button onClick={handleDeleteSelectedBox}>Delete SelectedBox</button> 
       <button onClick={sendForm}>Console</button> 
         <form onSubmit={(event) => {handleGlobalSizeChange(event);}}>
-            <label htmlFor={`global_width`}>Width:</label>
+            <label htmlFor={`global_width`}>Width: </label>
             <input
                 type="text"
                 id={`global_width`}
             />
-            <label htmlFor={`global_height`}>Height:</label>
+            <label htmlFor={`global_height`}>Height: </label>
             <input
                 type="text"
                 id={`global_height`}
+            />
+            <br />
+            <label htmlFor={`global_z`}>Z: </label>
+            <input
+                type="text"
+                id={`global_z`}
             />
             <button type="submit">Set Size Box</button>
         </form>
